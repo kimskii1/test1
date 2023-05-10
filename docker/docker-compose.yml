@@ -1,0 +1,41 @@
+version: '3.7'
+networks:
+  default:
+    name: test1-default
+services:
+  php-auth:
+    container_name: 'test1-php'
+    image: 'kimskii/php8.1-fpm'
+    working_dir: /application
+    volumes:
+      - '${PROJECT_PATH}:/application'
+  nodejs:
+    container_name: 'test1-front'
+    build:
+      context: .
+      dockerfile: dockerfiles/nodejs/Dockerfile
+    ports:
+      - "${PROJECT_FRONT_PORT}:8080"
+    command: /bin/sh -c "npm install && npm run serve"
+    volumes:
+      - '${PROJECT_FRONT_PATH}/:/app'
+  pgsql:
+    container_name: 'test1-db'
+    image: postgres
+#    restart: always
+    environment:
+      - 'POSTGRES_USER=${DB_USER}'
+      - 'POSTGRES_PASSWORD=${DB_PASSWORD}'
+    volumes:
+      - ./pgsql/data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+  webserver:
+    container_name: 'test1-webserver'
+    image: 'nginx:alpine'
+    working_dir: /application
+    volumes:
+      - '${PROJECT_PATH}:/application'
+      - './nginx/:/etc/nginx/conf.d/'
+    ports:
+      - '${PROJECT_PORT}:8080'
